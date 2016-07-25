@@ -1,4 +1,5 @@
-#spark-df-profiling 
+# HTML profiling reports from Apache Spark DataFrames
+
 Generates profile reports from an [Apache Spark DataFrame](https://spark.apache.org/docs/latest/sql-programming-guide.html). It is based on [`pandas_profiling`](https://github.com/JosPolfliet/pandas-profiling), but for Spark's DataFrames instead of pandas'.
 
 For each column the following statistics - if relevant for the column type - are presented in an interactive HTML report:
