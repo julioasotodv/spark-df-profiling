@@ -325,6 +325,12 @@ def describe(df, **kwargs):
         return stats
 
     def describe_1d(df, column, nrows):
+        column_type = df.select(column).dtypes[0][1]
+        # TODO: think about implementing analysis for complex
+        # data types:
+        if ("array" in column_type) or ("stuct" in column_type) or ("map" in column_type):
+            raise NotImplementedError("Column {c} is of type {t} and cannot be analyzed".format(c=column, t=column_type))
+
         distinct_count = df.select(column).agg(countDistinct(col(column)).alias("distinct_count")).toPandas()
         non_nan_count = df.select(column).na.drop().select(count(col(column)).alias("count")).toPandas()
         results_data = pd.concat([distinct_count, non_nan_count],axis=1)
@@ -338,7 +344,6 @@ def describe(df, **kwargs):
         result["memorysize"] = 0
         result.name = column
         
-        column_type = df.select(column).dtypes[0][1]
         if result["distinct_count"] <= 1:
             result = result.append(describe_constant_1d(df, column))
         elif column_type in {"tinyint", "smallint", "int", "bigint"}:
