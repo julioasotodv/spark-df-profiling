@@ -33,7 +33,10 @@ from pyspark.sql.functions import (abs as df_abs, col, count, countDistinct,
 def describe(df, **kwargs):
     if not isinstance(df, SparkDataFrame):
         raise TypeError("df must be of type pyspark.sql.DataFrame")
-    if df.count() == 0:
+
+    # Number of rows:
+    table_stats = {"n": df.count()}
+    if table_stats["n"] == 0:
         raise ValueError("df cannot be empty")
         
     bins = kwargs.get('bins', 10)
@@ -47,16 +50,13 @@ def describe(df, **kwargs):
 
     matplotlib.style.use(resource_filename(__name__, "spark_df_profiling.mplstyle"))
     
+    # Function to "pretty name" floats:
     def pretty_name(x):
         x *= 100
         if x == int(x):
             return '%.0f%%' % x
         else:
             return '%.1f%%' % x
-
-
-    # Number of rows:
-    table_stats = {"n": df.count()}
 
     # Function to compute the correlation matrix:
     def corr_matrix(df, columns=None):
