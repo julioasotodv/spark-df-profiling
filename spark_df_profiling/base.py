@@ -292,7 +292,6 @@ def describe(df, **kwargs):
         # end of the Series:
         top_50 = value_counts.limit(50).toPandas()
         top_50_categories = top_50[column].values.tolist()
-        print(top_50_categories)
 
         others_count = pd.Series([df.select(column).na.drop()
                         .where(~(col(column).isin(*top_50_categories)))
@@ -354,7 +353,7 @@ def describe(df, **kwargs):
             result = result.append(describe_categorical_1d(df, column))
 
         # TODO: check whether it is worth it to
-        # implement the mode:
+        # implement the "real" mode:
         if (result["count"] > result["distinct_count"] > 1):
             try:
                 result["mode"] = result["top"]
@@ -365,6 +364,10 @@ def describe(df, **kwargs):
                 result["mode"] = result["value_counts"].index[0]
             except KeyError:
                 result["mode"] = 0
+            # If and IndexError happens,
+            # it is because all column are NULLs:
+            except IndexError:
+                result["mode"] = "MISSING"
             
         return result
 
