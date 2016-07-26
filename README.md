@@ -10,7 +10,7 @@ For each column the following statistics - if relevant for the column type - are
 * **Most frequent values**
 * **Histogram**
 
-All operations are done *efficiently*, which means that no Python UDFs or `.map()` transformations are used at all; only Spark SQL's catalyst (Tungsten) and codegen is used for the retrieval of all statistics.
+All operations are done *efficiently*, which means that no Python UDFs or `.map()` transformations are used at all; only Spark SQL's Catalyst (and the Tungsten execution engine) is used for the retrieval of all statistics.
 
 ## Demo
 
