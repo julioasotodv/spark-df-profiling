@@ -269,7 +269,15 @@ def describe(df, **kwargs):
                                                   ).toPandas()
         stats = stats_df.ix[0].copy()
         stats.name = column
-        stats["range"] = stats["max"] - stats["min"]
+
+        # Convert Pandas timestamp object to regular datetime:
+        if isinstance(stats["max"], pd.tslib.Timestamp):
+            stats = stats.astype(object)
+            stats["max"] = str(stats["max"].to_pydatetime())
+            stats["min"] = str(stats["min"].to_pydatetime())
+        # Range only got when type is date
+        else:
+            stats["range"] = stats["max"] - stats["min"]
         stats["type"] = "DATE"
         return stats
 
