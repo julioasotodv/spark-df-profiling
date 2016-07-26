@@ -87,7 +87,7 @@ def describe(df, **kwargs):
             """
             Recursive function that exploits the
             ability to call the Spark SQL Column method
-            .when in a recursive way.
+            .when() in a recursive way.
             """
             left_edges = left_edges[:]
             if len(left_edges) == 0:
@@ -291,7 +291,9 @@ def describe(df, **kwargs):
         # and put the rest of them grouped at the
         # end of the Series:
         top_50 = value_counts.limit(50).toPandas()
-        top_50_categories = list(top_50[column].values)
+        top_50_categories = top_50[column].values.tolist()
+        print(top_50_categories)
+
         others_count = pd.Series([df.select(column).na.drop()
                         .where(~(col(column).isin(*top_50_categories)))
                         .count()
@@ -353,13 +355,16 @@ def describe(df, **kwargs):
 
         # TODO: check whether it is worth it to
         # implement the mode:
-        if result["count"] > result["distinct_count"] > 1:
+        if (result["count"] > result["distinct_count"] > 1):
             try:
                 result["mode"] = result["top"]
             except KeyError:
                 result["mode"] = 0
         else:
-            result["mode"] = result["value_counts"].index[0]
+            try:
+                result["mode"] = result["value_counts"].index[0]
+            except KeyError:
+                result["mode"] = 0
             
         return result
 
@@ -369,14 +374,16 @@ def describe(df, **kwargs):
     
     # Compute correlation matrix
     computable_corrs = [colum for colum in ldesc if ldesc[colum]["type"] in {"NUM"}]
-    corr = corr_matrix(df, columns=computable_corrs)
-    for x, corr_x in corr.iterrows():
-        for y, corr in corr_x.iteritems():
-            if x == y: 
-                break
-                
-            if corr > 0.9:
-                ldesc[x] = pd.Series(['CORR', y, corr], index=['type', 'correlation_var', 'correlation'], name=x)
+
+    if len(computable_corrs) > 0:
+        corr = corr_matrix(df, columns=computable_corrs)
+        for x, corr_x in corr.iterrows():
+            for y, corr in corr_x.iteritems():
+                if x == y: 
+                    break
+                    
+                if corr > 0.9:
+                    ldesc[x] = pd.Series(['CORR', y, corr], index=['type', 'correlation_var', 'correlation'], name=x)
 
     # Convert ldesc to a DataFrame
     variable_stats = pd.DataFrame(ldesc)
@@ -393,10 +400,17 @@ def describe(df, **kwargs):
 
     freq_dict = {}
     for var in variable_stats:
-        if not(variable_stats[var]["value_counts"] is np.nan):
+        if "value_counts" not in variable_stats[var]:
+            pass
+        elif not(variable_stats[var]["value_counts"] is np.nan):
             freq_dict[var] = variable_stats[var]["value_counts"]
+        else:
+            pass
+    try:
+        variable_stats = variable_stats.drop("value_counts")
+    except ValueError:
+        pass
 
-    variable_stats = variable_stats.drop("value_counts")
     return {'table': table_stats, 'variables': variable_stats.T, 'freq': freq_dict}
 
 
