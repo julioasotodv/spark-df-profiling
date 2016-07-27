@@ -44,9 +44,13 @@ To use pyspark with Jupyter, you must also set `PYSPARK_DRIVER_PYTHON`:
 
 	export PYSPARK_DRIVER_PYTHON=/path/to/your/anaconda/bin/python
 
-And then
+And then:
 
 	IPYTHON_OPTS="notebook" /path/to/your/bin/pyspark
+
+In `spark 2.0.X` `IPYTHON_OPTS` is removed: the environment variable you want to set is `PYSPARK_DRIVER_PYTHON_OPTS`:
+
+	PYSPARK_DRIVER_PYTHON_OPTS="notebook" /path/to/your/bin/pyspark
 
 Now you can create a new notebook, which will run pyspark.
 
@@ -78,9 +82,7 @@ profile.to_file(outputfile="/tmp/myoutputfile.html")
 
 ## Dependencies
 
-* Apache Spark (who would imagine!) -> requires Spark `1.6.0+`
+* Apache Spark (who would imagine!) -> requires Spark `1.6.0+` (runs on `2.0.0` also).
 * **An internet connection.** spark-df-profiling requires an internet connection to download the Bootstrap and JQuery libraries. You can choose to embed them in the HTML template code, should you desire.
 * pandas (>=0.16) -> needed for internal data arrangement. Only needed in the Spark driver.
 * matplotlib (>=1.4) -> needed for histogram creation. Only needed in the Spark driver.
-
-
