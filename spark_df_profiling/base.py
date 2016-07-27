@@ -24,10 +24,23 @@ from itertools import product
 
 from pyspark.sql import DataFrame as SparkDataFrame
 from pyspark.sql.functions import (abs as df_abs, col, count, countDistinct, 
-                                   kurtosis, max as df_max, mean, 
-                                   min as df_min, skewness, stddev, 
-                                   sum as df_sum,variance, when
+                                   max as df_max, mean, min as df_min,  
+                                   sum as df_sum, when
                                    )
+
+# Backwards compatibility with Spark 1.5:
+try:
+    from pyspark.sql.functions import variance, stddev, kurtosis, skewness
+    spark_version = "1.6+"
+except ImportError:
+    from pyspark.sql.functions import pow as df_pow, sqrt
+    def variance_custom(column, mean, count):
+        return df_sum(df_pow(column - mean, int(2))) / float(count-1)
+    def skewness_custom(column, mean, count):
+        return ((np.sqrt(count) * df_sum(df_pow(column - mean, int(3))))/df_pow(sqrt(df_sum(df_pow(column - mean, int(2)))),3))
+    def kurtosis_custom(column, mean, count):
+        return ((count*df_sum(df_pow(column - mean, int(4)))) / df_pow(df_sum(df_pow(column - mean, int(2))),2)) -3
+    spark_version = "<1.6"
 
 
 def describe(df, **kwargs):
@@ -164,15 +177,32 @@ def describe(df, **kwargs):
 
 
     def describe_integer_1d(df, column, current_result, nrows):
-        stats_df = df.select(column).na.drop().agg(mean(col(column)).alias("mean"),
-                                                df_min(col(column)).alias("min"),
-                                                df_max(col(column)).alias("max"),
-                                                variance(col(column)).alias("variance"),
-                                                kurtosis(col(column)).alias("kurtosis"),
-                                                stddev(col(column)).alias("std"),
-                                                skewness(col(column)).alias("skewness"),
-                                                df_sum(col(column)).alias("sum")
-                                               ).toPandas()
+        if spark_version == "1.6+":
+            stats_df = df.select(column).na.drop().agg(mean(col(column)).alias("mean"),
+                                                       df_min(col(column)).alias("min"),
+                                                       df_max(col(column)).alias("max"),
+                                                       variance(col(column)).alias("variance"),
+                                                       kurtosis(col(column)).alias("kurtosis"),
+                                                       stddev(col(column)).alias("std"),
+                                                       skewness(col(column)).alias("skewness"),
+                                                       df_sum(col(column)).alias("sum")
+                                                       ).toPandas()
+        else:
+            stats_df = df.select(column).na.drop().agg(mean(col(column)).alias("mean"),
+                                                       df_min(col(column)).alias("min"),
+                                                       df_max(col(column)).alias("max"),
+                                                       df_sum(col(column)).alias("sum")
+                                                       ).toPandas()
+            stats_df["variance"] = df.select(column).na.drop().agg(variance_custom(col(column), 
+                                                                                   stats_df["mean"].ix[0],
+                                                                                   current_result["count"])).toPandas().ix[0][0]
+            stats_df["std"] = np.sqrt(stats_df["variance"])
+            stats_df["skewness"] = df.select(column).na.drop().agg(skewness_custom(col(column), 
+                                                                                   stats_df["mean"].ix[0],
+                                                                                   current_result["count"])).toPandas().ix[0][0]
+            stats_df["kurtosis"] = df.select(column).na.drop().agg(kurtosis_custom(col(column), 
+                                                                                   stats_df["mean"].ix[0],
+                                                                                   current_result["count"])).toPandas().ix[0][0]
 
         for x in np.array([0.05, 0.25, 0.5, 0.75, 0.95]):
             stats_df[pretty_name(x)] = (df.select(column)
@@ -214,15 +244,32 @@ def describe(df, **kwargs):
         return stats
 
     def describe_float_1d(df, column, current_result, nrows):
-        stats_df = df.select(column).na.drop().agg(mean(col(column)).alias("mean"),
-                                                df_min(col(column)).alias("min"),
-                                                df_max(col(column)).alias("max"),
-                                                variance(col(column)).alias("variance"),
-                                                kurtosis(col(column)).alias("kurtosis"),
-                                                stddev(col(column)).alias("std"),
-                                                skewness(col(column)).alias("skewness"),
-                                                df_sum(col(column)).alias("sum")
-                                               ).toPandas()
+        if spark_version == "1.6+":
+            stats_df = df.select(column).na.drop().agg(mean(col(column)).alias("mean"),
+                                                       df_min(col(column)).alias("min"),
+                                                       df_max(col(column)).alias("max"),
+                                                       variance(col(column)).alias("variance"),
+                                                       kurtosis(col(column)).alias("kurtosis"),
+                                                       stddev(col(column)).alias("std"),
+                                                       skewness(col(column)).alias("skewness"),
+                                                       df_sum(col(column)).alias("sum")
+                                                       ).toPandas()
+        else:
+            stats_df = df.select(column).na.drop().agg(mean(col(column)).alias("mean"),
+                                                       df_min(col(column)).alias("min"),
+                                                       df_max(col(column)).alias("max"),
+                                                       df_sum(col(column)).alias("sum")
+                                                       ).toPandas()
+            stats_df["variance"] = df.select(column).na.drop().agg(variance_custom(col(column), 
+                                                                                   stats_df["mean"].ix[0],
+                                                                                   current_result["count"])).toPandas().ix[0][0]
+            stats_df["std"] = np.sqrt(stats_df["variance"])
+            stats_df["skewness"] = df.select(column).na.drop().agg(skewness_custom(col(column), 
+                                                                                   stats_df["mean"].ix[0],
+                                                                                   current_result["count"])).toPandas().ix[0][0]
+            stats_df["kurtosis"] = df.select(column).na.drop().agg(kurtosis_custom(col(column), 
+                                                                                   stats_df["mean"].ix[0],
+                                                                                   current_result["count"])).toPandas().ix[0][0]
 
         for x in np.array([0.05, 0.25, 0.5, 0.75, 0.95]):
             stats_df[pretty_name(x)] = (df.select(column)
