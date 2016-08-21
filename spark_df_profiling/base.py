@@ -232,6 +232,7 @@ def describe(df, bins, corr_reject, **kwargs):
                 hist_data["count"], 
                 width=hist_data["width"], 
                 facecolor='#337ab7')
+        plot.set_ylabel("Frequency")
         plot.figure.subplots_adjust(left=0.15, right=0.95, top=0.9, bottom=0.1, wspace=0, hspace=0)
         plot.figure.savefig(imgdata)
         imgdata.seek(0)
@@ -299,6 +300,7 @@ def describe(df, bins, corr_reject, **kwargs):
                 hist_data["count"], 
                 width=hist_data["width"], 
                 facecolor='#337ab7')
+        plot.set_ylabel("Frequency")
         plot.figure.subplots_adjust(left=0.15, right=0.95, top=0.9, bottom=0.1, wspace=0, hspace=0)
         plot.figure.savefig(imgdata)
         imgdata.seek(0)
