@@ -1,3 +1,5 @@
+import sys
+
 try:
     from StringIO import BytesIO
 except ImportError:
@@ -411,6 +413,9 @@ def describe(df, **kwargs):
             result = result.append(describe_unique_1d(df, column))
         else: 
             result = result.append(describe_categorical_1d(df, column))
+            # Fix to also count MISSING value in the distict_count field:
+            if result["n_missing"] > 0:
+                result["distinct_count"] = result["distinct_count"] + 1
 
         # TODO: check whether it is worth it to
         # implement the "real" mode:
@@ -514,7 +519,10 @@ def to_html(sample, stats_object):
         elif isinstance(value, float):
             return value_formatters[formatters.DEFAULT_FLOAT_FORMATTER](value)
         else:
-            return str(value)
+            if sys.version_info.major == 3:
+                return str(value)
+            else:
+                return unicode(value)
 
     def freq_table(freqtable, n, var_table, table_template, row_template, max_number_of_items_in_table):
 
