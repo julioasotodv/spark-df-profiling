@@ -45,7 +45,7 @@ except ImportError:
     spark_version = "<1.6"
 
 
-def describe(df, **kwargs):
+def describe(df, bins, corr_reject, **kwargs):
     if not isinstance(df, SparkDataFrame):
         raise TypeError("df must be of type pyspark.sql.DataFrame")
 
@@ -53,8 +53,6 @@ def describe(df, **kwargs):
     table_stats = {"n": df.count()}
     if table_stats["n"] == 0:
         raise ValueError("df cannot be empty")
-        
-    bins = kwargs.get('bins', 10)
     
     try:
         # reset matplotlib style before use
@@ -441,17 +439,18 @@ def describe(df, **kwargs):
     ldesc = {colum: describe_1d(df, colum, table_stats["n"]) for colum in df.columns}
     
     # Compute correlation matrix
-    computable_corrs = [colum for colum in ldesc if ldesc[colum]["type"] in {"NUM"}]
+    if corr_reject is not None:
+        computable_corrs = [colum for colum in ldesc if ldesc[colum]["type"] in {"NUM"}]
 
-    if len(computable_corrs) > 0:
-        corr = corr_matrix(df, columns=computable_corrs)
-        for x, corr_x in corr.iterrows():
-            for y, corr in corr_x.iteritems():
-                if x == y: 
-                    break
-                    
-                if corr > 0.9:
-                    ldesc[x] = pd.Series(['CORR', y, corr], index=['type', 'correlation_var', 'correlation'], name=x)
+        if len(computable_corrs) > 0:
+            corr = corr_matrix(df, columns=computable_corrs)
+            for x, corr_x in corr.iterrows():
+                for y, corr in corr_x.iteritems():
+                    if x == y: 
+                        break
+                        
+                    if corr >= corr_reject:
+                        ldesc[x] = pd.Series(['CORR', y, corr], index=['type', 'correlation_var', 'correlation'], name=x)
 
     # Convert ldesc to a DataFrame
     variable_stats = pd.DataFrame(ldesc)
