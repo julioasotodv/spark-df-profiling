@@ -87,3 +87,4 @@ profile.to_file(outputfile="/tmp/myoutputfile.html")
 * **An internet connection.** spark-df-profiling requires an internet connection to download the Bootstrap and JQuery libraries. You can choose to embed them in the HTML template code, should you desire.
 * pandas (`>=0.16`) -> needed for internal data arrangement. Only needed in the Spark driver.
 * matplotlib (`>=1.4`) -> needed for histogram creation. Only needed in the Spark driver.
+* jinja2 (`>=2.8`) -> needed for template rendering. Only needed in the Spark driver.
