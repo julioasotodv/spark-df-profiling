@@ -9,6 +9,7 @@ except ImportError:
     from urllib.parse import quote
 
 import base64
+from itertools import product
 
 import matplotlib
 matplotlib.use('Agg')
@@ -18,9 +19,8 @@ import os
 import pandas as pd
 import spark_df_profiling.formatters as formatters, spark_df_profiling.templates as templates
 from matplotlib import pyplot as plt
-import six
 from pkg_resources import resource_filename
-from itertools import product
+import six
 
 from pyspark.sql import DataFrame as SparkDataFrame
 from pyspark.sql.functions import (abs as df_abs, col, count, countDistinct, 
@@ -482,9 +482,14 @@ def to_html(sample, stats_object):
 
     """
     Generate a HTML report from summary statistics and a given sample
-    :param sample: DataFrame containing the sample you want to print
-    :param stats_object: Dictionary containing summary statistics. Should be generated with an appropriate describe() function
-    :return: String containing profile report in HTML format
+    Parameters
+    ----------
+    sample: DataFrame containing the sample you want to print
+    stats_object: Dictionary containing summary statistics. Should be generated with an appropriate describe() function
+
+    Returns
+    -------
+    str, containing profile report in HTML format
     """
 
     n_obs = stats_object['table']['n']
@@ -539,7 +544,7 @@ def to_html(sample, stats_object):
                 label_in_bar = "&nbsp;"
                 label_after_bar = freq
 
-            return row_template.format(label=label,
+            return row_template.render(label=label,
                                        width=width,
                                        count=freq,
                                        percentage='{:2.1f}'.format(freq / n * 100),
@@ -560,7 +565,7 @@ def to_html(sample, stats_object):
         if freq_missing > min_freq:
             freq_rows_html += format_row(freq_missing, "(Missing)", extra_class='missing')
 
-        return table_template.format(rows=freq_rows_html, varid=hash(idx))
+        return table_template.render(rows=freq_rows_html, varid=hash(idx))
 
     # Variables
     rows_html = u""
@@ -581,9 +586,9 @@ def to_html(sample, stats_object):
 
         if row['type'] == 'CAT':
             formatted_values['minifreqtable'] = freq_table(stats_object['freq'][idx], n_obs, stats_object['variables'].ix[idx],
-                                                           templates.mini_freq_table, templates.mini_freq_table_row, 3)
+                                                           templates.template('mini_freq_table'), templates.template('mini_freq_table_row'), 3)
             formatted_values['freqtable'] = freq_table(stats_object['freq'][idx], n_obs, stats_object['variables'].ix[idx],
-                                                       templates.freq_table, templates.freq_table_row, 20)
+                                                       templates.template('freq_table'), templates.template('freq_table_row'), 20)
             if row['distinct_count'] > 50:
                 messages.append(templates.messages['HIGH_CARDINALITY'].format(formatted_values, varname = formatters.fmt_varname(idx)))
                 row_classes['distinct_count'] = "alert"
@@ -603,7 +608,7 @@ def to_html(sample, stats_object):
                 formatted_values['firstn_expanded'] = pd.DataFrame(obs, index=range(1, n_obs+1)).to_html(classes="sample table table-hover", header=False)
                 formatted_values['lastn_expanded'] = ''
 
-        rows_html += templates.row_templates_dict[row['type']].format(formatted_values, row_classes=row_classes)
+        rows_html += templates.row_templates_dict[row['type']].render(values=formatted_values, row_classes=row_classes)
 
         if row['type'] in {'CORR', 'CONST'}:
             formatted_values['varname'] = formatters.fmt_varname(idx)
@@ -623,10 +628,10 @@ def to_html(sample, stats_object):
     for msg in messages:
         messages_html += templates.message_row.format(message=msg)
 
-    overview_html = templates.overview_template.format(formatted_values, row_classes = row_classes, messages=messages_html)
+    overview_html = templates.template('overview').render(values=formatted_values, row_classes = row_classes, messages=messages_html)
 
     # Sample
 
-    sample_html = templates.sample_html.format(sample_table_html=sample.to_html(classes="sample"))
-
-    return templates.base_html % {'overview_html': overview_html, 'rows_html': rows_html, 'sample_html': sample_html}
+    sample_html = templates.template('sample').render(sample_table_html=sample.to_html(classes="sample"))
+    # TODO: should be done in the template
+    return templates.template('base').render({'overview_html': overview_html, 'rows_html': rows_html, 'sample_html': sample_html})
