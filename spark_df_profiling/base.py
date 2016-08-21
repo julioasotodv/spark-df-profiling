@@ -39,9 +39,9 @@ except ImportError:
     def variance_custom(column, mean, count):
         return df_sum(df_pow(column - mean, int(2))) / float(count-1)
     def skewness_custom(column, mean, count):
-        return ((np.sqrt(count) * df_sum(df_pow(column - mean, int(3))))/df_pow(sqrt(df_sum(df_pow(column - mean, int(2)))),3))
+        return ((np.sqrt(count) * df_sum(df_pow(column - mean, int(3)))) / float(df_pow(sqrt(df_sum(df_pow(column - mean, int(2)))),3)))
     def kurtosis_custom(column, mean, count):
-        return ((count*df_sum(df_pow(column - mean, int(4)))) / df_pow(df_sum(df_pow(column - mean, int(2))),2)) -3
+        return ((count*df_sum(df_pow(column - mean, int(4)))) / float(df_pow(df_sum(df_pow(column - mean, int(2))),2))) -3
     spark_version = "<1.6"
 
 
@@ -545,7 +545,7 @@ def to_html(sample, stats_object):
         # TODO: Correctly sort missing and other
 
         def format_row(freq, label, extra_class=''):
-            width = int(freq / max_freq * 99) + 1
+            width = int(freq / float(max_freq) * 99) + 1
             if width > 20:
                 label_in_bar = freq
                 label_after_bar = ""
@@ -556,7 +556,7 @@ def to_html(sample, stats_object):
             return row_template.render(label=label,
                                        width=width,
                                        count=freq,
-                                       percentage='{:2.1f}'.format(freq / n * 100),
+                                       percentage='{:2.1f}'.format(freq / float(n) * 100),
                                        extra_class=extra_class,
                                        label_in_bar=label_in_bar,
                                        label_after_bar=label_after_bar)
