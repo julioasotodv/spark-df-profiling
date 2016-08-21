@@ -9,7 +9,7 @@ except ImportError:
 
 setup(
     name='spark-df-profiling',
-    version='1.1.7',
+    version='1.1.8',
     author='Julio Antonio Soto de Vicente',
     author_email='julio@esbet.es',
     packages=['spark_df_profiling'],
