@@ -1,2 +1,2 @@
 include spark_df_profiling/*.mplstyle
-include pandas_profiling/templates/*.html
+include spark_df_profiling/templates/*.html
