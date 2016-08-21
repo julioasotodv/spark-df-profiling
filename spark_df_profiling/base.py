@@ -39,9 +39,9 @@ except ImportError:
     def variance_custom(column, mean, count):
         return df_sum(df_pow(column - mean, int(2))) / float(count-1)
     def skewness_custom(column, mean, count):
-        return ((np.sqrt(count) * df_sum(df_pow(column - mean, int(3)))) / float(df_pow(sqrt(df_sum(df_pow(column - mean, int(2)))),3)))
+        return ((np.sqrt(count) * df_sum(df_pow(column - mean, int(3)))) / df_pow(sqrt(df_sum(df_pow(column - mean, int(2)))),3))
     def kurtosis_custom(column, mean, count):
-        return ((count*df_sum(df_pow(column - mean, int(4)))) / float(df_pow(df_sum(df_pow(column - mean, int(2))),2))) -3
+        return ((count*df_sum(df_pow(column - mean, int(4)))) / df_pow(df_sum(df_pow(column - mean, int(2))),2)) -3
     spark_version = "<1.6"
 
 
