@@ -394,7 +394,7 @@ def describe(df, **kwargs):
         results_data["p_unique"] = results_data["distinct_count"] / float(results_data["count"])
         results_data["is_unique"] = results_data["distinct_count"] == nrows
         results_data["n_missing"] = nrows - results_data["count"]
-        results_data["p_missing"] = results_data["n_missing"] / float(results_data["count"])
+        results_data["p_missing"] = results_data["n_missing"] / float(nrows)
         results_data["p_infinite"] = 0
         results_data["n_infinite"] = 0
         result = results_data.ix[0].copy()
