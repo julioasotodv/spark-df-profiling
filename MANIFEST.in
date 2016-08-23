@@ -1,2 +1,4 @@
 include spark_df_profiling/*.mplstyle
 include spark_df_profiling/templates/*.html
+include spark_df_profiling/templates/js/*.js
+include spark_df_profiling/templates/css/*.css

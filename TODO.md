@@ -1,5 +1,6 @@
 # TODO list
 
++ Add integration with the Databricks platform (by copying static files to appropiate locations and referring them in the HTML rendered by Jinja2)
 + ~~Let the user choose correlation threshold for variable rejection~~
 + Create test suite
 + ~~Check support for other pandas / Spark versions~~

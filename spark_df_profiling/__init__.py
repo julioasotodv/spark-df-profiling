@@ -1,5 +1,6 @@
 
 import codecs
+import os
 from .templates import template
 from .base import describe, to_html
 
@@ -21,6 +22,12 @@ class ProfileReport(object):
                             description_set)
 
         self.description_set = description_set
+
+    def render_standalone(self):
+        library_path = os.path.abspath(os.path.dirname(__file__))
+        return templates.template('wrapper_static').render(content=self.html,
+                                                           css_path=os.path.join(library_path,'templates/css/'),
+                                                           js_path=os.path.join(library_path,'templates/js/'))
 
     def get_description(self):
         return self.description_set

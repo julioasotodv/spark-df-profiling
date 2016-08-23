@@ -17,7 +17,7 @@ setup(
     license='MIT',
     description='Create HTML profiling reports from Apache Spark DataFrames',
     install_requires=[
-        "pandas>=0.16",
+        "pandas>=0.17.0",
         "matplotlib>=1.4",
         "jinja2>=2.8",
         "six>=1.9.0"
