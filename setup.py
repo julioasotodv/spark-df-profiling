@@ -19,7 +19,8 @@ setup(
     install_requires=[
         "pandas>=0.16",
         "matplotlib>=1.4",
-        "jinja2>=2.8"
+        "jinja2>=2.8",
+        "six>=1.9.0"
     ],
     include_package_data = True,
     classifiers=[
