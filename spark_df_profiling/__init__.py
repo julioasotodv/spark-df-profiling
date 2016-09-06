@@ -32,15 +32,14 @@ class ProfileReport(object):
             js_path=os.path.join(library_path,'templates/js/')
             utils.fs.mkdirs("/FileStore/spark_df_profiling/css")
             utils.fs.mkdirs("/FileStore/spark_df_profiling/js")
-            print(os.path.join("file:", css_path, "bootstrap-theme.min.css"))
-            utils.fs.cp(os.path.join("file:", css_path, "bootstrap-theme.min.css"), 
-                "/FileStore/spark_df_profiling/css/bootstrap-theme.min.css")
-            utils.fs.cp(os.path.join("file:", css_path, "bootstrap.min.css"), 
-                "/FileStore/spark_df_profiling/css/bootstrap.min.css")
-            utils.fs.cp(os.path.join("file:", js_path, "bootstrap.min.js"), 
-                "/FileStore/spark_df_profiling/js/bootstrap.min.js")
-            utils.fs.cp(os.path.join("file:", js_path, "jquery.min.js"), 
-                "/FileStore/spark_df_profiling/js/jquery.min.js")
+            utils.fs.cp("file:" + css_path + "bootstrap-theme.min.css", 
+                        "/FileStore/spark_df_profiling/css/bootstrap-theme.min.css")
+            utils.fs.cp("file:" + css_path + "bootstrap.min.css", 
+                        "/FileStore/spark_df_profiling/css/bootstrap.min.css")
+            utils.fs.cp("file:" + js_path  + "bootstrap.min.js", 
+                        "/FileStore/spark_df_profiling/js/bootstrap.min.js")
+            utils.fs.cp("file:" + js_path  + "jquery.min.js", 
+                        "/FileStore/spark_df_profiling/js/jquery.min.js")
             return template('wrapper_static').render(content=self.html)
 
     def get_description(self):
