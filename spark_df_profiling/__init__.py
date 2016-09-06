@@ -23,11 +23,25 @@ class ProfileReport(object):
 
         self.description_set = description_set
 
-    def render_standalone(self):
-        library_path = os.path.abspath(os.path.dirname(__file__))
-        return templates.template('wrapper_static').render(content=self.html,
-                                                           css_path=os.path.join(library_path,'templates/css/'),
-                                                           js_path=os.path.join(library_path,'templates/js/'))
+    def render_standalone(self, mode="databricks", utils=None):
+        if mode != "databricks":
+            raise NotImplementedError("Only databricks mode is supported for now")
+        else:
+            library_path = os.path.abspath(os.path.dirname(__file__))
+            css_path=os.path.join(library_path,'templates/css/')
+            js_path=os.path.join(library_path,'templates/js/')
+            utils.fs.mkdirs("/FileStore/spark_df_profiling/css")
+            utils.fs.mkdirs("/FileStore/spark_df_profiling/js")
+            print(os.path.join("file:", css_path, "bootstrap-theme.min.css"))
+            utils.fs.cp(os.path.join("file:", css_path, "bootstrap-theme.min.css"), 
+                "/FileStore/spark_df_profiling/css/bootstrap-theme.min.css")
+            utils.fs.cp(os.path.join("file:", css_path, "bootstrap.min.css"), 
+                "/FileStore/spark_df_profiling/css/bootstrap.min.css")
+            utils.fs.cp(os.path.join("file:", js_path, "bootstrap.min.js"), 
+                "/FileStore/spark_df_profiling/js/bootstrap.min.js")
+            utils.fs.cp(os.path.join("file:", js_path, "jquery.min.js"), 
+                "/FileStore/spark_df_profiling/js/jquery.min.js")
+            return template('wrapper_static').render(content=self.html)
 
     def get_description(self):
         return self.description_set
@@ -52,7 +66,7 @@ class ProfileReport(object):
 
             self.file = codecs.open(outputfile, 'w+b', encoding='utf8')
             # TODO: should be done in the template
-            self.file.write(templates.template('wrapper').render(content=self.html))
+            self.file.write(template('wrapper').render(content=self.html))
             self.file.close()
 
     def _repr_html_(self):
