@@ -17,7 +17,7 @@ import matplotlib
 matplotlib.use('Agg')
 
 import numpy as np
-import os
+import json
 import pandas as pd
 import spark_df_profiling.formatters as formatters, spark_df_profiling.templates as templates
 from matplotlib import pyplot as plt
@@ -330,6 +330,14 @@ def describe(df, bins, corr_reject, **kwargs):
         stats["type"] = "DATE"
         return stats
 
+    def guess_json_type(string_value):
+        try:
+            obj = json.loads(string_value)
+        except:
+            return None
+
+        return type(obj)
+
     def describe_categorical_1d(df, column):
         value_counts = (df.select(column).na.drop()
                         .groupBy(column)
@@ -366,6 +374,10 @@ def describe(df, bins, corr_reject, **kwargs):
         stats["value_counts"] = top
         stats["type"] = "CAT"
         value_counts.unpersist()
+        unparsed_valid_jsons = df.select(column).na.drop().rdd.map(
+            lambda x: guess_json_type(x[column])).filter(
+            lambda x: x).distinct().collect()
+        stats["unparsed_json_types"] = unparsed_valid_jsons
         return stats
 
     def describe_constant_1d(df, column):
@@ -514,8 +526,13 @@ def to_html(sample, stats_object):
         raise TypeError("stats_object badly formatted. Did you generate this using the spark_df_profiling-eda.describe() function?")
 
     def fmt(value, name):
-        if pd.isnull(value):
-            return ""
+        if not isinstance(value, list):
+            if pd.isnull(value):
+                return ""
+        else:
+            if not value:
+                return "[]"
+
         if name in value_formatters:
             return value_formatters[name](value)
         elif isinstance(value, float):
