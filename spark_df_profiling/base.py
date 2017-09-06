@@ -25,8 +25,8 @@ from pkg_resources import resource_filename
 import six
 
 from pyspark.sql import DataFrame as SparkDataFrame
-from pyspark.sql.functions import (abs as df_abs, col, count, countDistinct, 
-                                   max as df_max, mean, min as df_min,  
+from pyspark.sql.functions import (abs as df_abs, col, count, countDistinct,
+                                   max as df_max, mean, min as df_min,
                                    sum as df_sum, when
                                    )
 
@@ -45,7 +45,7 @@ except ImportError:
     spark_version = "<1.6"
 
 
-def describe(df, bins, corr_reject, **kwargs):
+def describe(df, bins, corr_reject, config, **kwargs):
     if not isinstance(df, SparkDataFrame):
         raise TypeError("df must be of type pyspark.sql.DataFrame")
 
@@ -53,7 +53,7 @@ def describe(df, bins, corr_reject, **kwargs):
     table_stats = {"n": df.count()}
     if table_stats["n"] == 0:
         raise ValueError("df cannot be empty")
-    
+
     try:
         # reset matplotlib style before use
         # Fails in matplotlib 1.4.x so plot might look bad
@@ -62,7 +62,7 @@ def describe(df, bins, corr_reject, **kwargs):
         pass
 
     matplotlib.style.use(resource_filename(__name__, "spark_df_profiling.mplstyle"))
-    
+
     # Function to "pretty name" floats:
     def pretty_name(x):
         x *= 100
@@ -76,18 +76,18 @@ def describe(df, bins, corr_reject, **kwargs):
         if columns is None:
             columns = df.columns
         combinations = list(product(columns,columns))
-        
+
         def separate(l, n):
             for i in range(0, len(l), n):
                 yield l[i:i+n]
 
         grouped = list(separate(combinations,len(columns)))
         df_cleaned = df.select(*columns).na.drop(how="any")
-        
+
         for i in grouped:
             for j in enumerate(i):
                 i[j[0]] = i[j[0]] + (df_cleaned.corr(str(j[1][0]), str(j[1][1])),)
-                
+
         df_pandas = pd.DataFrame(grouped).applymap(lambda x: x[2])
         df_pandas.columns = columns
         df_pandas.index = columns
@@ -109,32 +109,32 @@ def describe(df, bins, corr_reject, **kwargs):
                 next_col = current_col.when(col(column) >= float(left_edges[0]), count)
                 left_edges.pop(0)
                 return create_all_conditions(next_col, column, left_edges[:], count+1)
-            next_col = current_col.when((float(left_edges[0]) <= col(column)) 
+            next_col = current_col.when((float(left_edges[0]) <= col(column))
                                         & (col(column) < float(left_edges[1])), count)
             left_edges.pop(0)
             return create_all_conditions(next_col, column, left_edges[:], count+1)
-        
+
         num_range = maxim - minim
         bin_width = num_range / float(bins)
         left_edges = [minim]
         for _bin in range(bins):
             left_edges = left_edges + [left_edges[-1] + bin_width]
         left_edges.pop()
-        expression_col = when((float(left_edges[0]) <= col(column)) 
+        expression_col = when((float(left_edges[0]) <= col(column))
                               & (col(column) < float(left_edges[1])), 0)
         left_edges_copy = left_edges[:]
         left_edges_copy.pop(0)
         bin_data = (df.select(col(column))
                     .na.drop()
-                    .select(col(column), 
-                            create_all_conditions(expression_col, 
-                                                  column, 
+                    .select(col(column),
+                            create_all_conditions(expression_col,
+                                                  column,
                                                   left_edges_copy
                                                  ).alias("bin_id")
                            )
                     .groupBy("bin_id").count()
                    ).toPandas()
-        
+
         # If no data goes into one bin, it won't 
         # appear in bin_data; so we should fill
         # in the blanks:
@@ -143,11 +143,11 @@ def describe(df, bins, corr_reject, **kwargs):
         bin_data = bin_data.reindex(new_index)
         bin_data["bin_id"] = bin_data.index
         bin_data = bin_data.fillna(0)
-        
+
         # We add the left edges and bin width:
         bin_data["left_edge"] = left_edges
         bin_data["width"] = bin_width
-        
+
         return bin_data
 
     def mini_histogram(histogram_data):
@@ -156,9 +156,9 @@ def describe(df, bins, corr_reject, **kwargs):
         hist_data = histogram_data
         figure = plt.figure(figsize=(2, 0.75))
         plot = plt.subplot()
-        plt.bar(hist_data["left_edge"], 
-                hist_data["count"], 
-                width=hist_data["width"], 
+        plt.bar(hist_data["left_edge"],
+                hist_data["count"],
+                width=hist_data["width"],
                 facecolor='#337ab7')
         plot.axes.get_yaxis().set_visible(False)
         plot.set_axis_bgcolor("w")
@@ -193,14 +193,14 @@ def describe(df, bins, corr_reject, **kwargs):
                                                        df_max(col(column)).alias("max"),
                                                        df_sum(col(column)).alias("sum")
                                                        ).toPandas()
-            stats_df["variance"] = df.select(column).na.drop().agg(variance_custom(col(column), 
+            stats_df["variance"] = df.select(column).na.drop().agg(variance_custom(col(column),
                                                                                    stats_df["mean"].ix[0],
                                                                                    current_result["count"])).toPandas().ix[0][0]
             stats_df["std"] = np.sqrt(stats_df["variance"])
-            stats_df["skewness"] = df.select(column).na.drop().agg(skewness_custom(col(column), 
+            stats_df["skewness"] = df.select(column).na.drop().agg(skewness_custom(col(column),
                                                                                    stats_df["mean"].ix[0],
                                                                                    current_result["count"])).toPandas().ix[0][0]
-            stats_df["kurtosis"] = df.select(column).na.drop().agg(kurtosis_custom(col(column), 
+            stats_df["kurtosis"] = df.select(column).na.drop().agg(kurtosis_custom(col(column),
                                                                                    stats_df["mean"].ix[0],
                                                                                    current_result["count"])).toPandas().ix[0][0]
 
@@ -228,9 +228,9 @@ def describe(df, bins, corr_reject, **kwargs):
         hist_data = create_hist_data(df, column, stats["min"], stats["max"], bins)
         figure = plt.figure(figsize=(6, 4))
         plot = plt.subplot()
-        plt.bar(hist_data["left_edge"], 
-                hist_data["count"], 
-                width=hist_data["width"], 
+        plt.bar(hist_data["left_edge"],
+                hist_data["count"],
+                width=hist_data["width"],
                 facecolor='#337ab7')
         plot.set_ylabel("Frequency")
         plot.figure.subplots_adjust(left=0.15, right=0.95, top=0.9, bottom=0.1, wspace=0, hspace=0)
@@ -261,14 +261,14 @@ def describe(df, bins, corr_reject, **kwargs):
                                                        df_max(col(column)).alias("max"),
                                                        df_sum(col(column)).alias("sum")
                                                        ).toPandas()
-            stats_df["variance"] = df.select(column).na.drop().agg(variance_custom(col(column), 
+            stats_df["variance"] = df.select(column).na.drop().agg(variance_custom(col(column),
                                                                                    stats_df["mean"].ix[0],
                                                                                    current_result["count"])).toPandas().ix[0][0]
             stats_df["std"] = np.sqrt(stats_df["variance"])
-            stats_df["skewness"] = df.select(column).na.drop().agg(skewness_custom(col(column), 
+            stats_df["skewness"] = df.select(column).na.drop().agg(skewness_custom(col(column),
                                                                                    stats_df["mean"].ix[0],
                                                                                    current_result["count"])).toPandas().ix[0][0]
-            stats_df["kurtosis"] = df.select(column).na.drop().agg(kurtosis_custom(col(column), 
+            stats_df["kurtosis"] = df.select(column).na.drop().agg(kurtosis_custom(col(column),
                                                                                    stats_df["mean"].ix[0],
                                                                                    current_result["count"])).toPandas().ix[0][0]
 
@@ -296,9 +296,9 @@ def describe(df, bins, corr_reject, **kwargs):
         hist_data = create_hist_data(df, column, stats["min"], stats["max"], bins)
         figure = plt.figure(figsize=(6, 4))
         plot = plt.subplot()
-        plt.bar(hist_data["left_edge"], 
-                hist_data["count"], 
-                width=hist_data["width"], 
+        plt.bar(hist_data["left_edge"],
+                hist_data["count"],
+                width=hist_data["width"],
                 facecolor='#337ab7')
         plot.set_ylabel("Frequency")
         plot.figure.subplots_adjust(left=0.15, right=0.95, top=0.9, bottom=0.1, wspace=0, hspace=0)
@@ -310,7 +310,7 @@ def describe(df, bins, corr_reject, **kwargs):
 
         stats['mini_histogram'] = mini_histogram(hist_data)
 
-        return stats        
+        return stats
 
     def describe_date_1d(df, column):
         stats_df = df.select(column).na.drop().agg(df_min(col(column)).alias("min"),
@@ -344,14 +344,14 @@ def describe(df, bins, corr_reject, **kwargs):
                         .agg(count(col(column)))
                         .orderBy("count({c})".format(c=column),ascending=False)
                        ).cache()
-        
+
         # Get the most frequent class:
         stats = (value_counts
                  .limit(1)
                  .withColumnRenamed(column, "top")
                  .withColumnRenamed("count({c})".format(c=column), "freq")
                 ).toPandas().ix[0]
-        
+
         # Get the top 50 classes by value count,
         # and put the rest of them grouped at the
         # end of the Series:
@@ -394,7 +394,7 @@ def describe(df, bins, corr_reject, **kwargs):
                                  .limit(50)).toPandas().ix[:,0].value_counts()
         return stats
 
-    def describe_1d(df, column, nrows):
+    def describe_1d(df, column, nrows, lookup_config=None):
         column_type = df.select(column).dtypes[0][1]
         # TODO: think about implementing analysis for complex
         # data types:
@@ -413,7 +413,7 @@ def describe(df, bins, corr_reject, **kwargs):
         result = results_data.ix[0].copy()
         result["memorysize"] = 0
         result.name = column
-        
+
         if result["distinct_count"] <= 1:
             result = result.append(describe_constant_1d(df, column))
         elif column_type in {"tinyint", "smallint", "int", "bigint"}:
@@ -424,7 +424,7 @@ def describe(df, bins, corr_reject, **kwargs):
             result = result.append(describe_date_1d(df, column))
         elif result["is_unique"] == True:
             result = result.append(describe_unique_1d(df, column))
-        else: 
+        else:
             result = result.append(describe_categorical_1d(df, column))
             # Fix to also count MISSING value in the distict_count field:
             if result["n_missing"] > 0:
@@ -446,13 +446,34 @@ def describe(df, bins, corr_reject, **kwargs):
             # it is because all column are NULLs:
             except IndexError:
                 result["mode"] = "MISSING"
-            
+
+        if lookup_config:
+            lookup_object = lookup_config['object']
+            col_name_in_db = lookup_config['col_name_in_db'] if 'col_name_in_db' in lookup_config else None
+            try:
+                matched, unmatched = lookup_object.lookup(df.select(column), col_name_in_db)
+                result['lookedup_values'] = str(matched.count()) + "/" + str(df.select(column).count())
+            except:
+                result['lookedup_values'] = 'FAILED'
+        else:
+            result['lookedup_values'] = ''
+
         return result
 
 
     # Do the thing:
-    ldesc = {colum: describe_1d(df, colum, table_stats["n"]) for colum in df.columns}
-    
+    ldesc = {}
+    for colum in df.columns:
+        if colum in config:
+            if 'lookup' in config[colum]:
+                lookup_config = config[colum]['lookup']
+                desc = describe_1d(df, colum, table_stats["n"], lookup_config=lookup_config)
+            else:
+                desc = describe_1d(df, colum, table_stats["n"])
+        else:
+            desc = describe_1d(df, colum, table_stats["n"])
+        ldesc.update({colum: desc})
+
     # Compute correlation matrix
     if corr_reject is not None:
         computable_corrs = [colum for colum in ldesc if ldesc[colum]["type"] in {"NUM"}]
@@ -461,9 +482,9 @@ def describe(df, bins, corr_reject, **kwargs):
             corr = corr_matrix(df, columns=computable_corrs)
             for x, corr_x in corr.iterrows():
                 for y, corr in corr_x.iteritems():
-                    if x == y: 
+                    if x == y:
                         break
-                        
+
                     if corr >= corr_reject:
                         ldesc[x] = pd.Series(['CORR', y, corr], index=['type', 'correlation_var', 'correlation'], name=x)
 
@@ -584,8 +605,8 @@ def to_html(sample, stats_object):
 
         if freq_other > min_freq:
             freq_rows_html += format_row(freq_other,
-                                         "Other values (%s)" % (freqtable.count() 
-                                                                + freq_other_prefiltered_num 
+                                         "Other values (%s)" % (freqtable.count()
+                                                                + freq_other_prefiltered_num
                                                                 - max_number_of_items_in_table),
                                          extra_class='other')
 
