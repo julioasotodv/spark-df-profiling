@@ -161,7 +161,10 @@ def describe(df, bins, corr_reject, **kwargs):
                 width=hist_data["width"], 
                 facecolor='#337ab7')
         plot.axes.get_yaxis().set_visible(False)
-        plot.set_axis_bgcolor("w")
+        if hasattr(plot, 'set_facecolor'):
+            plot.set_facecolor("w")
+        else:
+            plot.set_axis_bgcolor("w")
         xticks = plot.xaxis.get_major_ticks()
         for tick in xticks[1:-1]:
             tick.set_visible(False)
