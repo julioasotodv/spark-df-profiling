@@ -47,6 +47,7 @@ value_formatters={
         u'total_missing': fmt_percent,
         DEFAULT_FLOAT_FORMATTER: lambda v: str(float('{:.5g}'.format(v))).rstrip('0').rstrip('.'),
         u'correlation_var': lambda v: fmt_varname(v),
+        u'unparsed_json_types': lambda v: ', '.join([s.__name__ for s in v])
         }
 
 def fmt_row_severity(v):

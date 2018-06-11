@@ -17,6 +17,14 @@
             <th>Missing (n)</th>
             <td>{{ values['n_missing'] }}</td>
         </tr>
+        <tr class="{{ row_classes['unparsed_json_types'] }}">
+            <th>Unparsed Json Types Found</th>
+            <td>{{ values['unparsed_json_types'] }}</td>
+        </tr>
+        <tr class="{{ row_classes['lookedup_values'] }}">
+            <th>Looked up Values</th>
+            <td>{{ values['lookedup_values'] }}</td>
+        </tr>
         <tr class="{{ row_classes['p_infinite'] }}">
             <th>Infinite (%)</th>
             <td>{{ values['p_infinite'] }}</td>
