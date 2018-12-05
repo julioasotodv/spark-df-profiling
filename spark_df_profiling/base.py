@@ -511,7 +511,7 @@ def describe(df, bins, corr_reject, config, **kwargs):
             pass
     try:
         variable_stats = variable_stats.drop("value_counts")
-    except ValueError:
+    except (ValueError, KeyError):
         pass
 
     return {'table': table_stats, 'variables': variable_stats.T, 'freq': freq_dict}
