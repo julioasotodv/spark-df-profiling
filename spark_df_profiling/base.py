@@ -207,7 +207,7 @@ def describe(df, bins, corr_reject, config, **kwargs):
         for x in np.array([0.05, 0.25, 0.5, 0.75, 0.95]):
             stats_df[pretty_name(x)] = (df.select(column)
                                         .na.drop()
-                                        .selectExpr("percentile({col},CAST({n} AS DOUBLE))"
+                                        .selectExpr("percentile(`{col}`,CAST({n} AS DOUBLE))"
                                                     .format(col=column, n=x)).toPandas().ix[:,0]
                                         )
         stats = stats_df.ix[0].copy()
@@ -275,7 +275,7 @@ def describe(df, bins, corr_reject, config, **kwargs):
         for x in np.array([0.05, 0.25, 0.5, 0.75, 0.95]):
             stats_df[pretty_name(x)] = (df.select(column)
                                         .na.drop()
-                                        .selectExpr("percentile_approx({col},CAST({n} AS DOUBLE))"
+                                        .selectExpr("percentile_approx(`{col}`,CAST({n} AS DOUBLE))"
                                                     .format(col=column, n=x)).toPandas().ix[:,0]
                                         )
         stats = stats_df.ix[0].copy()
