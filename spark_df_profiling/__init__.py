@@ -58,15 +58,17 @@ class ProfileReport(object):
         return variable_profile.index[variable_profile.correlation > threshold].tolist()
 
     def to_file(self, outputfile=DEFAULT_OUTPUTFILE):
-
         if outputfile != NO_OUTPUTFILE:
             if outputfile == DEFAULT_OUTPUTFILE:
                 outputfile = 'profile_' + str(hash(self)) + ".html"
 
             self.file = codecs.open(outputfile, 'w+b', encoding='utf8')
             # TODO: should be done in the template
-            self.file.write(template('wrapper').render(content=self.html))
+            self.file.write(self.rendered_html())
             self.file.close()
+
+    def rendered_html(self):
+        return template('wrapper').render(content=self.html)
 
     def _repr_html_(self):
         return self.html
