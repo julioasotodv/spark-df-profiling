@@ -320,7 +320,7 @@ def describe(df, bins, corr_reject, config, **kwargs):
         stats.name = column
 
         # Convert Pandas timestamp object to regular datetime:
-        if isinstance(stats["max"], pd.tslib.Timestamp):
+        if isinstance(stats["max"], pd.Timestamp):
             stats = stats.astype(object)
             stats["max"] = str(stats["max"].to_pydatetime())
             stats["min"] = str(stats["min"].to_pydatetime())
