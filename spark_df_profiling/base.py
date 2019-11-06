@@ -194,23 +194,23 @@ def describe(df, bins, corr_reject, config, **kwargs):
                                                        df_sum(col(column)).alias("sum")
                                                        ).toPandas()
             stats_df["variance"] = df.select(column).na.drop().agg(variance_custom(col(column),
-                                                                                   stats_df["mean"].ix[0],
-                                                                                   current_result["count"])).toPandas().ix[0][0]
+                                                                                   stats_df["mean"].iloc[0],
+                                                                                   current_result["count"])).toPandas().iloc[0][0]
             stats_df["std"] = np.sqrt(stats_df["variance"])
             stats_df["skewness"] = df.select(column).na.drop().agg(skewness_custom(col(column),
-                                                                                   stats_df["mean"].ix[0],
-                                                                                   current_result["count"])).toPandas().ix[0][0]
+                                                                                   stats_df["mean"].iloc[0],
+                                                                                   current_result["count"])).toPandas().iloc[0][0]
             stats_df["kurtosis"] = df.select(column).na.drop().agg(kurtosis_custom(col(column),
-                                                                                   stats_df["mean"].ix[0],
-                                                                                   current_result["count"])).toPandas().ix[0][0]
+                                                                                   stats_df["mean"].iloc[0],
+                                                                                   current_result["count"])).toPandas().iloc[0][0]
 
         for x in np.array([0.05, 0.25, 0.5, 0.75, 0.95]):
             stats_df[pretty_name(x)] = (df.select(column)
                                         .na.drop()
                                         .selectExpr("percentile(`{col}`,CAST({n} AS DOUBLE))"
-                                                    .format(col=column, n=x)).toPandas().ix[:,0]
+                                                    .format(col=column, n=x)).toPandas().iloc[:,0]
                                         )
-        stats = stats_df.ix[0].copy()
+        stats = stats_df.iloc[0].copy()
         stats.name = column
         stats["range"] = stats["max"] - stats["min"]
         stats["iqr"] = stats[pretty_name(0.75)] - stats[pretty_name(0.25)]
@@ -218,7 +218,7 @@ def describe(df, bins, corr_reject, config, **kwargs):
         stats["mad"] = (df.select(column)
                         .na.drop()
                         .select(df_abs(col(column)-stats["mean"]).alias("delta"))
-                        .agg(df_sum(col("delta"))).toPandas().ix[0,0] / float(current_result["count"]))
+                        .agg(df_sum(col("delta"))).toPandas().iloc[0,0] / float(current_result["count"]))
         stats["type"] = "NUM"
         stats['n_zeros'] = df.select(column).where(col(column)==0.0).count()
         stats['p_zeros'] = stats['n_zeros'] / float(nrows)
@@ -262,23 +262,23 @@ def describe(df, bins, corr_reject, config, **kwargs):
                                                        df_sum(col(column)).alias("sum")
                                                        ).toPandas()
             stats_df["variance"] = df.select(column).na.drop().agg(variance_custom(col(column),
-                                                                                   stats_df["mean"].ix[0],
-                                                                                   current_result["count"])).toPandas().ix[0][0]
+                                                                                   stats_df["mean"].iloc[0],
+                                                                                   current_result["count"])).toPandas().iloc[0][0]
             stats_df["std"] = np.sqrt(stats_df["variance"])
             stats_df["skewness"] = df.select(column).na.drop().agg(skewness_custom(col(column),
-                                                                                   stats_df["mean"].ix[0],
-                                                                                   current_result["count"])).toPandas().ix[0][0]
+                                                                                   stats_df["mean"].iloc[0],
+                                                                                   current_result["count"])).toPandas().iloc[0][0]
             stats_df["kurtosis"] = df.select(column).na.drop().agg(kurtosis_custom(col(column),
-                                                                                   stats_df["mean"].ix[0],
-                                                                                   current_result["count"])).toPandas().ix[0][0]
+                                                                                   stats_df["mean"].iloc[0],
+                                                                                   current_result["count"])).toPandas().iloc[0][0]
 
         for x in np.array([0.05, 0.25, 0.5, 0.75, 0.95]):
             stats_df[pretty_name(x)] = (df.select(column)
                                         .na.drop()
                                         .selectExpr("percentile_approx(`{col}`,CAST({n} AS DOUBLE))"
-                                                    .format(col=column, n=x)).toPandas().ix[:,0]
+                                                    .format(col=column, n=x)).toPandas().iloc[:,0]
                                         )
-        stats = stats_df.ix[0].copy()
+        stats = stats_df.iloc[0].copy()
         stats.name = column
         stats["range"] = stats["max"] - stats["min"]
         stats["iqr"] = stats[pretty_name(0.75)] - stats[pretty_name(0.25)]
@@ -286,7 +286,7 @@ def describe(df, bins, corr_reject, config, **kwargs):
         stats["mad"] = (df.select(column)
                         .na.drop()
                         .select(df_abs(col(column)-stats["mean"]).alias("delta"))
-                        .agg(df_sum(col("delta"))).toPandas().ix[0,0] / float(current_result["count"]))
+                        .agg(df_sum(col("delta"))).toPandas().iloc[0,0] / float(current_result["count"]))
         stats["type"] = "NUM"
         stats['n_zeros'] = df.select(column).where(col(column)==0.0).count()
         stats['p_zeros'] = stats['n_zeros'] / float(nrows)
@@ -316,11 +316,11 @@ def describe(df, bins, corr_reject, config, **kwargs):
         stats_df = df.select(column).na.drop().agg(df_min(col(column)).alias("min"),
                                                    df_max(col(column)).alias("max")
                                                   ).toPandas()
-        stats = stats_df.ix[0].copy()
+        stats = stats_df.iloc[0].copy()
         stats.name = column
 
         # Convert Pandas timestamp object to regular datetime:
-        if isinstance(stats["max"], pd.tslib.Timestamp):
+        if isinstance(stats["max"], pd.Timestamp):
             stats = stats.astype(object)
             stats["max"] = str(stats["max"].to_pydatetime())
             stats["min"] = str(stats["min"].to_pydatetime())
@@ -350,7 +350,7 @@ def describe(df, bins, corr_reject, config, **kwargs):
                  .limit(1)
                  .withColumnRenamed(column, "top")
                  .withColumnRenamed("count({c})".format(c=column), "freq")
-                ).toPandas().ix[0]
+                ).toPandas().iloc[0]
 
         # Get the top 50 classes by value count,
         # and put the rest of them grouped at the
@@ -384,14 +384,14 @@ def describe(df, bins, corr_reject, config, **kwargs):
         stats = pd.Series(['CONST'], index=['type'], name=column)
         stats["value_counts"] = (df.select(column)
                                  .na.drop()
-                                 .limit(1)).toPandas().ix[:,0].value_counts()
+                                 .limit(1)).toPandas().iloc[:,0].value_counts()
         return stats
 
     def describe_unique_1d(df, column):
         stats = pd.Series(['UNIQUE'], index=['type'], name=column)
         stats["value_counts"] = (df.select(column)
                                  .na.drop()
-                                 .limit(50)).toPandas().ix[:,0].value_counts()
+                                 .limit(50)).toPandas().iloc[:,0].value_counts()
         return stats
 
     def describe_1d(df, column, nrows, lookup_config=None):
@@ -410,7 +410,7 @@ def describe(df, bins, corr_reject, config, **kwargs):
         results_data["p_missing"] = results_data["n_missing"] / float(nrows)
         results_data["p_infinite"] = 0
         results_data["n_infinite"] = 0
-        result = results_data.ix[0].copy()
+        result = results_data.iloc[0].copy()
         result["memorysize"] = 0
         result.name = column
 
@@ -493,7 +493,7 @@ def describe(df, bins, corr_reject, config, **kwargs):
 
     # General statistics
     table_stats["nvar"] = len(df.columns)
-    table_stats["total_missing"] = float(variable_stats.ix["n_missing"].sum()) / (table_stats["n"] * table_stats["nvar"])
+    table_stats["total_missing"] = float(variable_stats.loc["n_missing"].sum()) / (table_stats["n"] * table_stats["nvar"])
     memsize = 0
     table_stats['memsize'] = formatters.fmt_bytesize(memsize)
     table_stats['recordsize'] = formatters.fmt_bytesize(memsize / table_stats['n'])
@@ -633,9 +633,9 @@ def to_html(sample, stats_object):
                 messages.append(templates.messages[col].format(formatted_values, varname = formatters.fmt_varname(idx)))
 
         if row['type'] == 'CAT':
-            formatted_values['minifreqtable'] = freq_table(stats_object['freq'][idx], n_obs, stats_object['variables'].ix[idx],
+            formatted_values['minifreqtable'] = freq_table(stats_object['freq'][idx], n_obs, stats_object['variables'].iloc[idx],
                                                            templates.template('mini_freq_table'), templates.template('mini_freq_table_row'), 3)
-            formatted_values['freqtable'] = freq_table(stats_object['freq'][idx], n_obs, stats_object['variables'].ix[idx],
+            formatted_values['freqtable'] = freq_table(stats_object['freq'][idx], n_obs, stats_object['variables'].iloc[idx],
                                                        templates.template('freq_table'), templates.template('freq_table_row'), 20)
             if row['distinct_count'] > 50:
                 messages.append(templates.messages['HIGH_CARDINALITY'].format(formatted_values, varname = formatters.fmt_varname(idx)))
