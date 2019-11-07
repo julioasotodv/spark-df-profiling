@@ -633,9 +633,9 @@ def to_html(sample, stats_object):
                 messages.append(templates.messages[col].format(formatted_values, varname = formatters.fmt_varname(idx)))
 
         if row['type'] == 'CAT':
-            formatted_values['minifreqtable'] = freq_table(stats_object['freq'][idx], n_obs, stats_object['variables'].iloc[idx],
+            formatted_values['minifreqtable'] = freq_table(stats_object['freq'][idx], n_obs, stats_object['variables'].loc[idx],
                                                            templates.template('mini_freq_table'), templates.template('mini_freq_table_row'), 3)
-            formatted_values['freqtable'] = freq_table(stats_object['freq'][idx], n_obs, stats_object['variables'].iloc[idx],
+            formatted_values['freqtable'] = freq_table(stats_object['freq'][idx], n_obs, stats_object['variables'].loc[idx],
                                                        templates.template('freq_table'), templates.template('freq_table_row'), 20)
             if row['distinct_count'] > 50:
                 messages.append(templates.messages['HIGH_CARDINALITY'].format(formatted_values, varname = formatters.fmt_varname(idx)))
