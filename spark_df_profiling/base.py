@@ -345,18 +345,14 @@ def describe(df, bins, corr_reject, config, **kwargs):
                         .orderBy("count({c})".format(c=column),ascending=False)
                        ).cache()
 
-        # Get the most frequent class:
-        stats = (value_counts
-                 .limit(1)
-                 .withColumnRenamed(column, "top")
-                 .withColumnRenamed("count({c})".format(c=column), "freq")
-                ).toPandas().iloc[0]
-
         # Get the top 50 classes by value count,
         # and put the rest of them grouped at the
         # end of the Series:
         top_50 = value_counts.limit(50).toPandas().sort_values("count({c})".format(c=column),
                                                                ascending=False)
+
+        stats = top_50.take([0]).rename(columns={column: 'top', f'count({column})': 'freq'}).ix[0]
+
         top_50_categories = top_50[column].values.tolist()
 
         others_count = pd.Series([df.select(column).na.drop()
