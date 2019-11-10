@@ -401,9 +401,8 @@ def describe(df, bins, corr_reject, config, **kwargs):
         if ("array" in column_type) or ("stuct" in column_type) or ("map" in column_type):
             raise NotImplementedError("Column {c} is of type {t} and cannot be analyzed".format(c=column, t=column_type))
 
-        distinct_count = df.select(column).agg(countDistinct(col(column)).alias("distinct_count")).toPandas()
-        non_nan_count = df.select(column).na.drop().select(count(col(column)).alias("count")).toPandas()
-        results_data = pd.concat([distinct_count, non_nan_count],axis=1)
+        results_data = df.select(countDistinct(col(column)).alias("distinct_count"),
+                                 count(col(column).isNotNull()).alias('count')).toPandas()
         results_data["p_unique"] = results_data["distinct_count"] / float(results_data["count"])
         results_data["is_unique"] = results_data["distinct_count"] == nrows
         results_data["n_missing"] = nrows - results_data["count"]
