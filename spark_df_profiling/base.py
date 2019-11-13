@@ -185,13 +185,15 @@ def describe(df, bins, corr_reject, config, **kwargs):
                                                        kurtosis(col(column)).alias("kurtosis"),
                                                        stddev(col(column)).alias("std"),
                                                        skewness(col(column)).alias("skewness"),
-                                                       df_sum(col(column)).alias("sum")
+                                                       df_sum(col(column)).alias("sum"),
+                                                       count(col(column) == 0.0).alias('n_zeros')
                                                        ).toPandas()
         else:
             stats_df = df.select(column).na.drop().agg(mean(col(column)).alias("mean"),
                                                        df_min(col(column)).alias("min"),
                                                        df_max(col(column)).alias("max"),
-                                                       df_sum(col(column)).alias("sum")
+                                                       df_sum(col(column)).alias("sum"),
+                                                       count(col(column) == 0.0).alias('n_zeros')
                                                        ).toPandas()
             stats_df["variance"] = df.select(column).na.drop().agg(variance_custom(col(column),
                                                                                    stats_df["mean"].iloc[0],
@@ -220,7 +222,6 @@ def describe(df, bins, corr_reject, config, **kwargs):
                         .select(df_abs(col(column)-stats["mean"]).alias("delta"))
                         .agg(df_sum(col("delta"))).toPandas().iloc[0,0] / float(current_result["count"]))
         stats["type"] = "NUM"
-        stats['n_zeros'] = df.select(column).where(col(column)==0.0).count()
         stats['p_zeros'] = stats['n_zeros'] / float(nrows)
 
         # Large histogram
@@ -253,13 +254,15 @@ def describe(df, bins, corr_reject, config, **kwargs):
                                                        kurtosis(col(column)).alias("kurtosis"),
                                                        stddev(col(column)).alias("std"),
                                                        skewness(col(column)).alias("skewness"),
-                                                       df_sum(col(column)).alias("sum")
+                                                       df_sum(col(column)).alias("sum"),
+                                                       count(col(column) == 0.0).alias('n_zeros')
                                                        ).toPandas()
         else:
             stats_df = df.select(column).na.drop().agg(mean(col(column)).alias("mean"),
                                                        df_min(col(column)).alias("min"),
                                                        df_max(col(column)).alias("max"),
-                                                       df_sum(col(column)).alias("sum")
+                                                       df_sum(col(column)).alias("sum"),
+                                                       count(col(column) == 0.0).alias('n_zeros')
                                                        ).toPandas()
             stats_df["variance"] = df.select(column).na.drop().agg(variance_custom(col(column),
                                                                                    stats_df["mean"].iloc[0],
@@ -288,7 +291,6 @@ def describe(df, bins, corr_reject, config, **kwargs):
                         .select(df_abs(col(column)-stats["mean"]).alias("delta"))
                         .agg(df_sum(col("delta"))).toPandas().iloc[0,0] / float(current_result["count"]))
         stats["type"] = "NUM"
-        stats['n_zeros'] = df.select(column).where(col(column)==0.0).count()
         stats['p_zeros'] = stats['n_zeros'] / float(nrows)
 
         # Large histogram
