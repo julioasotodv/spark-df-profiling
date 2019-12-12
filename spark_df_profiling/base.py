@@ -11,7 +11,7 @@ except ImportError:
     from urllib.parse import quote
 
 import base64
-from itertools import product
+from itertools import combinations
 
 import matplotlib
 matplotlib.use('Agg')
@@ -75,23 +75,18 @@ def describe(df, bins, corr_reject, config, **kwargs):
     def corr_matrix(df, columns=None):
         if columns is None:
             columns = df.columns
-        combinations = list(product(columns,columns))
+        col_combinations = combinations(columns, 2)
 
-        def separate(l, n):
-            for i in range(0, len(l), n):
-                yield l[i:i+n]
-
-        grouped = list(separate(combinations,len(columns)))
         df_cleaned = df.select(*columns).na.drop(how="any")
 
-        for i in grouped:
-            for j in enumerate(i):
-                i[j[0]] = i[j[0]] + (df_cleaned.corr(str(j[1][0]), str(j[1][1])),)
+        corr_result = pd.DataFrame(np.eye(len(columns)))
+        corr_result.columns = columns
+        corr_result.index = columns
 
-        df_pandas = pd.DataFrame(grouped).applymap(lambda x: x[2])
-        df_pandas.columns = columns
-        df_pandas.index = columns
-        return df_pandas
+        for i, j in col_combinations:
+            corr_result[i][j] = corr_result[j][i] = df_cleaned.corr(str(i), str(j))
+
+        return corr_result
 
     # Compute histogram (is not as easy as it looks):
     def create_hist_data(df, column, minim, maxim, bins=10):
