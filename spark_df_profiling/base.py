@@ -201,7 +201,7 @@ def describe(df, bins, corr_reject, config, **kwargs):
                                                                                    stats_df["mean"].iloc[0],
                                                                                    current_result["count"])).toPandas().iloc[0][0]
 
-        for x in np.array([0.05, 0.25, 0.5, 0.75, 0.95]):
+        for x in [0.05, 0.25, 0.5, 0.75, 0.95]:
             stats_df[pretty_name(x)] = (df.select(column)
                                         .na.drop()
                                         .selectExpr("percentile(`{col}`,CAST({n} AS DOUBLE))"
@@ -270,7 +270,7 @@ def describe(df, bins, corr_reject, config, **kwargs):
                                                                                    stats_df["mean"].iloc[0],
                                                                                    current_result["count"])).toPandas().iloc[0][0]
 
-        for x in np.array([0.05, 0.25, 0.5, 0.75, 0.95]):
+        for x in [0.05, 0.25, 0.5, 0.75, 0.95]:
             stats_df[pretty_name(x)] = (df.select(column)
                                         .na.drop()
                                         .selectExpr("percentile_approx(`{col}`,CAST({n} AS DOUBLE))"
