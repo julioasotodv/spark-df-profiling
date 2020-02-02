@@ -336,37 +336,35 @@ def describe(df, bins, corr_reject, config, **kwargs):
         return type(obj)
 
     def describe_categorical_1d(df, column):
+        count_column_name = "count({c})".format(c=column)
+
         value_counts = (df.select(column).na.drop()
                         .groupBy(column)
                         .agg(count(col(column)))
-                        .orderBy("count({c})".format(c=column),ascending=False)
+                        .orderBy(count_column_name, ascending=False)
                        ).cache()
 
         # Get the top 50 classes by value count,
         # and put the rest of them grouped at the
         # end of the Series:
-        top_50 = value_counts.limit(50).toPandas().sort_values("count({c})".format(c=column),
+        top_50 = value_counts.limit(50).toPandas().sort_values(count_column_name,
                                                                ascending=False)
 
-        stats = top_50.take([0]).rename(columns={column: 'top', f'count({column})': 'freq'}).ix[0]
+        stats = top_50.take([0]).rename(columns={column: 'top', count_column_name: 'freq'}).iloc[0]
 
-        top_50_categories = top_50[column].values.tolist()
+        others_count = 0
+        others_distinct_count = 0
+        unique_categories_count = value_counts.count()
+        if unique_categories_count > 50:
+            others_count = value_counts.select(df_sum(count_column_name)).toPandas().iloc[0, 0] - top_50[count_column_name].sum()
+            others_distinct_count = unique_categories_count - 50
 
-        others_count = pd.Series([df.select(column).na.drop()
-                        .where(~(col(column).isin(*top_50_categories)))
-                        .count()
-                        ], index=["***Other Values***"])
-        others_distinct_count = pd.Series([value_counts
-                                .where(~(col(column).isin(*top_50_categories)))
-                                .count()
-                                ], index=["***Other Values Distinct Count***"])
-
-        top = top_50.set_index(column)["count({c})".format(c=column)]
-        top = top.append(others_count)
-        top = top.append(others_distinct_count)
+        value_counts.unpersist()
+        top = top_50.set_index(column)[count_column_name]
+        top["***Other Values***"] = others_count
+        top["***Other Values Distinct Count***"] = others_distinct_count
         stats["value_counts"] = top
         stats["type"] = "CAT"
-        value_counts.unpersist()
         unparsed_valid_jsons = df.select(column).na.drop().rdd.map(
             lambda x: guess_json_type(x[column])).filter(
             lambda x: x).distinct().collect()
